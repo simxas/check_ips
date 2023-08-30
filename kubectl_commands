@@ -1,0 +1,9 @@
+kubectl get nodes -o json | jq '.items[] | {
+  name: .metadata.name,
+  cpu: .status.capacity.cpu,
+  "ephemeral-storage": (.status.capacity."ephemeral-storage"[:-2] | tonumber / 1024 / 1024 / 1024 | tostring + " GiB"),
+  "hugepages-1Gi": .status.capacity."hugepages-1Gi",
+  "hugepages-2Mi": .status.capacity."hugepages-2Mi",
+  memory: (.status.capacity.memory[:-2] | tonumber / 1024 | tostring + " GiB"),
+  pods: .status.capacity.pods
+}'

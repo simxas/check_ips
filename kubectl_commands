@@ -1,9 +1,140 @@
-kubectl get nodes -o json | jq '.items[] | {
-  name: .metadata.name,
-  cpu: .status.capacity.cpu,
-  "ephemeral-storage": (.status.capacity."ephemeral-storage"[:-2] | tonumber / 1024 / 1024 / 1024 | tostring + " GiB"),
-  "hugepages-1Gi": .status.capacity."hugepages-1Gi",
-  "hugepages-2Mi": .status.capacity."hugepages-2Mi",
-  memory: (.status.capacity.memory[:-2] | tonumber / 1024 | tostring + " GiB"),
-  pods: .status.capacity.pods
-}'
+h2. Prerequisites
+
+* *Homebrew*: Required for Mac users.
+* *Docker Desktop*: If not installed, follow the instructions [here|<url>].
+* *HyperKit*: If you prefer using Minikube without Docker, install HyperKit. It's a lightweight hypervisor developed by Apple for macOS, built on the Hypervisor.framework.
+{code}
+brew install hyperkit
+{code}
+
+h2. Usage
+
+After installing Minikube, start the cluster using the hyperkit driver:
+{code}
+minikube start --driver=hyperkit
+{code}
+To set hyperkit as the default driver:
+{code}
+minikube config set driver hyperkit
+{code}
+
+h2. Local Kubernetes Cluster Installation with Minikube and Deployment with Helm
+
+h3. Install kubectl:
+{code}
+brew install kubectl
+{code}
+
+h3. Install Minikube:
+{code}
+brew install minikube
+{code}
+If you encounter issues due to an older Minikube version, remove old links and link the new binary:
+{code}
+brew unlink minikube
+brew link minikube
+{code}
+Start Minikube with administrator access (avoid root login):
+{code}
+minikube start
+{code}
+Verify the setup:
+{code}
+kubectl get pods --all-namespaces
+{code}
+This will list all pods across namespaces. Initially, you'll see only Kubernetes system pods.
+
+It's advisable to create a local development namespace in your Kubernetes cluster:
+{code}
+kubectl create namespace <namespace-name>
+{code}
+For instance, to create a namespace named _my-namespace_:
+{code}
+kubectl create namespace my-namespace
+{code}
+
+h3. Install Helm:
+{code}
+curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+chmod 700 get_helm.sh
+./get_helm.sh
+{code}
+Verify Helm installation:
+{code}
+helm version --short
+{code}
+
+h3. Install Helm s3-plugin:
+{code}
+helm plugin install https://restoftheurl
+{code}
+
+h3. Install yq:
+Yq is a CLI tool for YAML data processing.
+{code}
+brew install yq
+{code}
+
+h3. Add Repository to Helm:
+{code}
+helm repo add stable-talech s3://restofurl
+{code}
+Search the repository:
+{code}
+helm search repo stable-talech
+{code}
+
+h3. Install Chart on Local Kubernetes Cluster:
+{code}
+helm install <release-name> <chart-name> --namespace <namespace-name>
+{code}
+For example:
+{code}
+helm install web-app-release stable-talech/web-app --namespace my-namespace
+{code}
+
+h3. Post-Installation Checks:
+Verify installations using:
+{code}
+kubectl get all -l release=<release-name>
+{code}
+Replace <release-name> with your Helm release name, like _web-app-staging_.
+
+For pod issues, check logs:
+{code}
+kubectl logs <pod-name>
+{code}
+For detailed resource info:
+{code}
+kubectl describe <resource-type> <resource-name>
+{code}
+If your app exposes a service via minikube:
+{code}
+minikube service <service-name>
+{code}
+
+h3. Helm Debugging:
+List Helm releases in a namespace:
+{code}
+helm list --namespace=<namespace-name>
+{code}
+Or simply:
+{code}
+helm list
+{code}
+For suspected Helm chart issues, render the chart locally:
+{code}
+helm template <release-name> <chart-name>
+{code}
+View Helm release history:
+{code}
+helm history <release-name>
+{code}
+For rollbacks:
+{code}
+helm rollback <release-name> <revision-number>
+{code}
+To uninstall a Helm chart:
+{code}
+helm uninstall <release-name>
+{code}
